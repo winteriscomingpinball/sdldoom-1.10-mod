@@ -63,7 +63,6 @@ typedef struct
 } maskdraw_t;
 
 
-
 //
 // Sprite rotation 0 is facing the viewer,
 //  rotation 1 is one angle turn CLOCKWISE around the axis.
@@ -191,8 +190,10 @@ void R_InitSpriteDefs (char** namelist)
   while (*check != NULL)
     check++;
 
-  numsprites = check-namelist - 1; // -1 added by georg
+  //numsprites = check-namelist - 1; // -1 added by georg
 
+  //numsprites = 136;
+  numsprites = 138;
   printf("numsprites = %d\n", numsprites);
 
   if (!numsprites)
@@ -202,6 +203,8 @@ void R_InitSpriteDefs (char** namelist)
 
   start = firstspritelump-1;
   end = lastspritelump+1;
+
+  puts("did some stuff with sprite setup...");
 
   // scan all the lump names for each of the names,
   // noting the highest frame letter.
@@ -271,6 +274,9 @@ void R_InitSpriteDefs (char** namelist)
       		break;
 	    }
 	  }
+
+puts("did some more stuff...");
+
 	
   	// allocate space for the frames present and copy sprtemp to it
 	  sprites[i].numframes = maxframe;
@@ -278,6 +284,9 @@ void R_InitSpriteDefs (char** namelist)
 	    Z_Malloc (maxframe * sizeof(spriteframe_t), PU_STATIC, NULL);
 	  memcpy (sprites[i].spriteframes, sprtemp, maxframe*sizeof(spriteframe_t));
   }
+
+  puts("finished that stuff...");
+
 }
 
 

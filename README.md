@@ -1,3 +1,8 @@
+Updates to sdl doom to be compatible with ggmicro.
+
+Support for Chex Quest (chex.wad) and Chex Quest 2 (chex.wad and chex2.wad) added.
+
+
 sdldoom-1.10-mod
 ================
 

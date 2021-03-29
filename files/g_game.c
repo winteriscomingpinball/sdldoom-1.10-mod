@@ -74,6 +74,10 @@ rcsid[] = "$Id: g_game.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 #define SAVEGAMESIZE	0x2c000
 #define SAVESTRINGSIZE	24
 
+boolean didWeaponLeft=0;
+boolean didWeaponRight=0;
+boolean weaponCheck=0;
+char weaponNum=1;
 
 
 boolean	G_CheckDemoStatus (void); 
@@ -255,7 +259,8 @@ void G_BuildTiccmd (ticcmd_t* cmd)
  
     strafe = gamekeydown[key_strafe] || mousebuttons[mousebstrafe] 
 	|| joybuttons[joybstrafe]; 
-    speed = gamekeydown[key_speed] || joybuttons[joybspeed];
+    //speed = gamekeydown[key_speed] || joybuttons[joybspeed];
+	speed=1;
  
     forward = side = 0;
     
@@ -269,6 +274,67 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     else 
 	turnheld = 0; 
 
+
+    //weapon change based on key < and >
+	//turns off turning left/right if weapon is changed
+	if(gamekeydown['<'] && !didWeaponLeft){
+		puts("weapon left");
+		didWeaponLeft=1;
+		gamekeydown[key_left]=0;
+		
+		
+		weaponCheck=0;
+		
+		
+		while(!weaponCheck){
+			weaponNum--;
+			if (weaponNum>NUMWEAPONS-1){
+				weaponNum=NUMWEAPONS-1;
+			}
+			if(players[0].weaponowned[weaponNum])weaponCheck=1;
+			
+		}
+		cmd->buttons |= BT_CHANGE; 
+	    cmd->buttons |= weaponNum<<BT_WEAPONSHIFT; 
+		
+		
+		
+	}else if(!gamekeydown['<'] && didWeaponLeft){
+		didWeaponLeft=0;
+	}
+	
+	
+	if(gamekeydown['>'] && !didWeaponRight){
+		puts("weapon right");
+		didWeaponRight=1;
+		gamekeydown[key_right]=0;
+		
+		weaponCheck=0;
+		
+		
+		while(!weaponCheck){
+			weaponNum++;
+			if (weaponNum>NUMWEAPONS-1){
+				weaponNum=0;
+			}
+			if(players[0].weaponowned[weaponNum])weaponCheck=1;
+			
+		}
+		cmd->buttons |= BT_CHANGE; 
+	    cmd->buttons |= weaponNum<<BT_WEAPONSHIFT; 
+		
+		
+		
+	}else if(!gamekeydown['>'] && didWeaponRight){
+		didWeaponRight=0;
+	}
+
+
+
+
+
+
+
     if (turnheld < SLOWTURNTICS) 
 	tspeed = 2;             // slow turn 
     else 
@@ -281,16 +347,20 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	{
 	    // fprintf(stderr, "strafe right\n");
 	    side += sidemove[speed]; 
+		//printf("should be strafing right... this is speed: %d\n",speed);
+		//printf("side equals: %d\n",side);
 	}
 	if (gamekeydown[key_left]) 
 	{
 	    //	fprintf(stderr, "strafe left\n");
 	    side -= sidemove[speed]; 
+		//printf("should be strafing left... this is speed: %d\n",speed);
+		//printf("side equals: %d\n",side);
 	}
-	if (joyxmove > 0) 
-	    side += sidemove[speed]; 
-	if (joyxmove < 0) 
-	    side -= sidemove[speed]; 
+	//if (joyxmove > 0) 
+	    //side += sidemove[speed]; 
+	//if (joyxmove < 0) 
+	    //side -= sidemove[speed]; 
  
     } 
     else 
@@ -309,16 +379,20 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     {
 	// fprintf(stderr, "up\n");
 	forward += forwardmove[speed]; 
+	//printf("should be moving forward... this is speed: %d\n",speed);
+	//printf("forward equals: %d\n",forward);
     }
     if (gamekeydown[key_down]) 
     {
 	// fprintf(stderr, "down\n");
+	//printf("should be moving back... this is speed: %d\n",speed);
 	forward -= forwardmove[speed]; 
+	//printf("forward equals: %d\n",forward);
     }
-    if (joyymove < 0) 
-	forward += forwardmove[speed]; 
-    if (joyymove > 0) 
-	forward -= forwardmove[speed]; 
+    //if (joyymove < 0) 
+	//forward += forwardmove[speed]; 
+    //if (joyymove > 0) 
+	//forward -= forwardmove[speed]; 
     if (gamekeydown[key_straferight]) 
 	side += sidemove[speed]; 
     if (gamekeydown[key_strafeleft]) 
@@ -337,6 +411,8 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	// clear double clicks if hit use button 
 	dclicks = 0;                   
     } 
+	
+	
 
     // chainsaw overrides 
     for (i=0 ; i<NUMWEAPONS-1 ; i++)        
@@ -347,68 +423,68 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	    break; 
 	}
     
-    // mouse
-    if (mousebuttons[mousebforward]) 
-	forward += forwardmove[speed];
+    // // mouse
+    // if (mousebuttons[mousebforward]) 
+	// forward += forwardmove[speed];
     
-    // forward double click
-    if (mousebuttons[mousebforward] != dclickstate && dclicktime > 1 ) 
-    { 
-	dclickstate = mousebuttons[mousebforward]; 
-	if (dclickstate) 
-	    dclicks++; 
-	if (dclicks == 2) 
-	{ 
-	    cmd->buttons |= BT_USE; 
-	    dclicks = 0; 
-	} 
-	else 
-	    dclicktime = 0; 
-    } 
-    else 
-    { 
-	dclicktime += ticdup; 
-	if (dclicktime > 20) 
-	{ 
-	    dclicks = 0; 
-	    dclickstate = 0; 
-	} 
-    }
+    // // forward double click
+    // if (mousebuttons[mousebforward] != dclickstate && dclicktime > 1 ) 
+    // { 
+	// dclickstate = mousebuttons[mousebforward]; 
+	// if (dclickstate) 
+	    // dclicks++; 
+	// if (dclicks == 2) 
+	// { 
+	    // cmd->buttons |= BT_USE; 
+	    // dclicks = 0; 
+	// } 
+	// else 
+	    // dclicktime = 0; 
+    // } 
+    // else 
+    // { 
+	// dclicktime += ticdup; 
+	// if (dclicktime > 20) 
+	// { 
+	    // dclicks = 0; 
+	    // dclickstate = 0; 
+	// } 
+    // }
     
-    // strafe double click
-    bstrafe =
-	mousebuttons[mousebstrafe] 
-	|| joybuttons[joybstrafe]; 
-    if (bstrafe != dclickstate2 && dclicktime2 > 1 ) 
-    { 
-	dclickstate2 = bstrafe; 
-	if (dclickstate2) 
-	    dclicks2++; 
-	if (dclicks2 == 2) 
-	{ 
-	    cmd->buttons |= BT_USE; 
-	    dclicks2 = 0; 
-	} 
-	else 
-	    dclicktime2 = 0; 
-    } 
-    else 
-    { 
-	dclicktime2 += ticdup; 
-	if (dclicktime2 > 20) 
-	{ 
-	    dclicks2 = 0; 
-	    dclickstate2 = 0; 
-	} 
-    } 
+    // // strafe double click
+    // bstrafe =
+	// mousebuttons[mousebstrafe] 
+	// || joybuttons[joybstrafe]; 
+    // if (bstrafe != dclickstate2 && dclicktime2 > 1 ) 
+    // { 
+	// dclickstate2 = bstrafe; 
+	// if (dclickstate2) 
+	    // dclicks2++; 
+	// if (dclicks2 == 2) 
+	// { 
+	    // cmd->buttons |= BT_USE; 
+	    // dclicks2 = 0; 
+	// } 
+	// else 
+	    // dclicktime2 = 0; 
+    // } 
+    // else 
+    // { 
+	// dclicktime2 += ticdup; 
+	// if (dclicktime2 > 20) 
+	// { 
+	    // dclicks2 = 0; 
+	    // dclickstate2 = 0; 
+	// } 
+    // } 
  
-    forward += mousey; 
-    if (strafe) 
-	side += mousex*2; 
-    else 
-	cmd->angleturn -= mousex*0x8; 
+    // forward += mousey; 
+    // if (strafe) 
+	// side += mousex*2; 
+    // else 
+	// cmd->angleturn -= mousex*0x8; 
 
-    mousex = mousey = 0; 
+    // mousex = mousey = 0; 
 	 
     if (forward > MAXPLMOVE) 
 	forward = MAXPLMOVE; 
@@ -419,8 +495,13 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     else if (side < -MAXPLMOVE) 
 	side = -MAXPLMOVE; 
  
+    //printf("final forward equals: %d\n",forward);
+	//printf("final side equals: %d\n",side);
     cmd->forwardmove += forward; 
     cmd->sidemove += side;
+	
+	//printf("final cmd->forwardmove equals: %d\n",cmd->forwardmove);
+	//printf("final cmd->sidemove equals: %d\n",cmd->sidemove);
     
     // special buttons
     if (sendpause) 
@@ -1276,9 +1357,9 @@ void G_DoSaveGame (void)
     int		i; 
 	
     if (M_CheckParm("-cdrom"))
-	sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",savegameslot);
+	sprintf(name,"c:\\doomdata\\%s%d.dsg",SAVEGAMENAME,savegameslot);
     else
-	sprintf (name,SAVEGAMENAME"%d.dsg",savegameslot); 
+	sprintf (name,"%s/%s%d.dsg",savepath,SAVEGAMENAME,savegameslot); 
     description = savedescription; 
 	 
     save_p = savebuffer = screens[1]+0x4000; 

@@ -128,6 +128,16 @@ void I_Quit (void)
     exit(0);
 }
 
+void I_Quit2 (int dummy)
+{
+    D_QuitNetGame ();
+    I_ShutdownSound();
+    I_ShutdownMusic();
+    M_SaveDefaults ();
+    I_ShutdownGraphics();
+    exit(0);
+}
+
 void I_WaitVBL(int count)
 {
     SDL_Delay((count*1000)/70);

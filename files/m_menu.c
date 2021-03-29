@@ -25,6 +25,7 @@
 static const char
 rcsid[] = "$Id: m_menu.c,v 1.7 1997/02/03 22:45:10 b1 Exp $";
 
+
 #include <stdio.h>
 #include <ctype.h>
 
@@ -250,7 +251,7 @@ menuitem_t MainMenu[]=
     {1,"M_SAVEG",M_SaveGame,'s'},
     // Another hickup with Special edition.
     {1,"M_RDTHIS",M_ReadThis,'r'},
-    {1,"M_QUITG",M_QuitDOOM,'q'}
+    {1,"M_QUITG",I_Quit2,'q'}
 };
 
 menu_t  MainDef =
@@ -512,8 +513,8 @@ void M_ReadSaveStrings(void)
 	
     for (i = 0;i < load_end;i++)
     {
-	sprintf(name,SAVEGAMENAME"%d.dsg",i);
-
+	sprintf(name,"%s/%s%d.dsg",savepath,SAVEGAMENAME,i);
+    printf("checking here for save data: %s\n",name);
 	handle = fopen (name, "r");
 	if (handle == NULL)
 	{
@@ -573,10 +574,12 @@ void M_LoadSelect(int choice)
     char    name[256];
 	
     if (M_CheckParm("-cdrom"))
-	sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",choice);
-    else
-	sprintf(name,SAVEGAMENAME"%d.dsg",choice);
-    G_LoadGame (name);
+	sprintf(name,"c:\\doomdata\\%s%d.dsg",SAVEGAMENAME,choice);
+    else{
+	sprintf(name,"%s/%s%d.dsg",savepath,SAVEGAMENAME,choice);
+    printf("checking here for load data: %s\n",name);
+	}
+	G_LoadGame (name);
     M_ClearMenus ();
 }
 
@@ -640,6 +643,7 @@ void M_SaveSelect(int choice)
     
     saveSlot = choice;
     strcpy(saveOldString,savegamestrings[choice]);
+	sprintf(savegamestrings[choice],"save%d",choice+1);
     if (!strcmp(savegamestrings[choice],EMPTYSTRING))
 	savegamestrings[choice][0] = 0;
     saveCharIndex = strlen(savegamestrings[choice]);
@@ -747,6 +751,7 @@ void M_DrawReadThis1(void)
     switch ( gamemode )
     {
       case commercial:
+	  case chex:
 	V_DrawPatchDirect (0,0,0,W_CacheLumpName("HELP",PU_CACHE));
 	break;
       case shareware:
@@ -772,6 +777,7 @@ void M_DrawReadThis2(void)
     {
       case retail:
       case commercial:
+	  case chex:
 	// This hack keeps us from having to change menus.
 	V_DrawPatchDirect (0,0,0,W_CacheLumpName("CREDIT",PU_CACHE));
 	break;
@@ -870,7 +876,7 @@ void M_NewGame(int choice)
 	return;
     }
 	
-    if ( gamemode == commercial )
+    if ( gamemode == commercial || gamemode == chex )
 	M_SetupNextMenu(&NewDef);
     else
 	M_SetupNextMenu(&EpiDef);
@@ -898,11 +904,11 @@ void M_VerifyNightmare(int ch)
 
 void M_ChooseSkill(int choice)
 {
-    if (choice == nightmare)
-    {
-	M_StartMessage(NIGHTMARE,M_VerifyNightmare,true);
-	return;
-    }
+    //if (choice == nightmare)
+    //{
+	//M_StartMessage(NIGHTMARE,M_VerifyNightmare,true);
+	//return;
+    //}
 	
     G_DeferedInitNew(choice,epi+1,1);
     M_ClearMenus ();
@@ -1010,7 +1016,8 @@ void M_EndGame(int choice)
 	return;
     }
 	
-    M_StartMessage(ENDGAME,M_EndGameResponse,true);
+    //M_StartMessage(ENDGAME,M_EndGameResponse,false);
+	M_EndGameResponse('y');
 }
 
 
@@ -1071,8 +1078,9 @@ int     quitsounds2[8] =
 
 void M_QuitResponse(int ch)
 {
-    if (ch != 'y')
-	return;
+    //if (ch != 'x')
+	//return;
+
     if (!netgame)
     {
 	if (gamemode == commercial)
@@ -1855,6 +1863,9 @@ void M_Init (void)
   
     switch ( gamemode )
     {
+	case chex:
+	EpiDef.numitems=1;
+	
       case commercial:
 	// This is used because DOOM 2 had only one HELP
         //  page. I use CREDIT as second page now, but
@@ -1868,6 +1879,8 @@ void M_Init (void)
 	ReadDef1.y = 165;
 	ReadMenu1[0].routine = M_FinishReadThis;
 	break;
+	
+
       case shareware:
 	// Episode 2 and 3 are handled,
 	//  branching to an ad screen.

@@ -37,8 +37,20 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 #include "doomdef.h"
 
+#include "ggmicro_screen.c"
+
 
 SDL_Surface *screen;
+SDL_Surface *hr_screen;
+
+int escape_check=0;
+int tab_check=0;
+
+unsigned char weaponButtonNum=1;
+char weaponChangeRight=0;
+char weaponChangeLeft=0;
+
+int currentNumKey=SDLK_1;
 
 // Fake mouse handling.
 boolean		grabMouse;
@@ -68,7 +80,7 @@ int xlatekey(SDL_keysym *key)
       case SDLK_ESCAPE:	rc = KEY_ESCAPE;	break;
       case SDLK_RETURN:	rc = KEY_ENTER;		break;
       case SDLK_TAB:	rc = KEY_TAB;		break;
-      case SDLK_F1:	rc = KEY_F1;		break;
+      case SDLK_F1:	rc = SDLK_x;		break;
       case SDLK_F2:	rc = KEY_F2;		break;
       case SDLK_F3:	rc = KEY_F3;		break;
       case SDLK_F4:	rc = KEY_F4;		break;
@@ -107,9 +119,11 @@ int xlatekey(SDL_keysym *key)
       case SDLK_RMETA:
 	rc = KEY_RALT;
 	break;
+      case SDLK_KP_MULTIPLY: rc=KEY_RCTRL; break;
 	
       default:
-        rc = key->sym;
+        //rc = key->sym;
+		rc = 0;
 	break;
     }
 
@@ -142,15 +156,152 @@ void I_GetEvent(SDL_Event *Event)
     switch (Event->type)
     {
       case SDL_KEYDOWN:
+	  switch(Event->key.keysym.sym){
+		  case SDLK_F1:
+		      weaponChangeRight++;
+			  weaponChangeLeft++;
+		      //event.type = ev_keydown;
+			  //event.data1 = SDLK_x;
+			  //D_PostEvent(&event);
+		  case SDLK_UP:
+		  escape_check++;
+		  
+		  if (escape_check==2){
+			  
+			  event.type = ev_keyup;
+			  event.data1 = KEY_ENTER;
+			  D_PostEvent(&event);
+			  
+			  event.type = ev_keydown;
+			  event.data1 = KEY_ESCAPE;
+			  D_PostEvent(&event);
+			  
+		  }
+		  break;
+		  
+		  case SDLK_RSHIFT:
+		      event.type = ev_keydown;
+			  event.data1 = KEY_RALT;
+			  //printf("Key down: %d\n",event.data1);
+			  D_PostEvent(&event);
+			  
+			  event.type = ev_keydown;
+			  event.data1 = KEY_ENTER;
+			  D_PostEvent(&event);
+			  
+		  break;
+		  case SDLK_RIGHT:
+		      weaponChangeRight++;
+		  break;
+		  case SDLK_LEFT:
+		      weaponChangeLeft++;
+		  break;
+		  
+	  }
+	  
+	  // if (weaponChangeRight==2 || weaponChangeLeft==2){
+		  // switch(weaponButtonNum){
+			  // case 1:
+				// currentNumKey=SDLK_1;
+			  // break;
+			  // case 2:
+				// currentNumKey=SDLK_2;
+			  // break;
+			  // case 3:
+				// currentNumKey=SDLK_3;
+			  // break;
+			  // case 4:
+				// currentNumKey=SDLK_4;
+			  // break;
+			  // case 5:
+				// currentNumKey=SDLK_5;
+			  // break;
+			  // case 6:
+				// currentNumKey=SDLK_6;
+			  // break;
+			  // case 7:
+				// currentNumKey=SDLK_7;
+			  // break;
+		  // }
+		  if(weaponChangeRight==2){
+			  event.type = ev_keydown;
+		      event.data1 = SDLK_GREATER;
+		      D_PostEvent(&event);
+		  }else if(weaponChangeLeft==2){
+			  event.type = ev_keydown;
+		      event.data1 = SDLK_LESS;
+		      D_PostEvent(&event);
+		  }
+		  //if (weaponButtonNum>7)weaponButtonNum=1;
+		  
+	  //}
+	  
 	event.type = ev_keydown;
 	event.data1 = xlatekey(&Event->key.keysym);
-	D_PostEvent(&event);
+	//printf("Key down: %d\n",event.data1);
+	
+	if(event.data1>0)D_PostEvent(&event);
         break;
 
       case SDL_KEYUP:
+	  switch(Event->key.keysym.sym){
+		  case SDLK_F1:
+		      if(weaponChangeRight==2){
+				  event.type = ev_keyup;
+				  event.data1 = SDLK_GREATER;
+				  D_PostEvent(&event);
+			  }else if(weaponChangeLeft==2){
+				  event.type = ev_keyup;
+				  event.data1 = SDLK_LESS;
+				  D_PostEvent(&event);
+			  }
+		      weaponChangeRight=0;
+			  weaponChangeLeft=0;
+			  //event.type = ev_keyup;
+			  //event.data1 = SDLK_x;
+			  //D_PostEvent(&event);
+		  case SDLK_UP:
+		  
+		  if (escape_check==2){
+		    event.type = ev_keyup;
+	        event.data1 = KEY_ESCAPE;
+	        D_PostEvent(&event);
+		  }
+		  escape_check=0;
+	
+		  break;
+		  
+		  case SDLK_RSHIFT:
+		      event.type = ev_keyup;
+			  event.data1 = KEY_RALT;
+			  D_PostEvent(&event);
+			  
+			  event.type = ev_keyup;
+			  event.data1 = KEY_ENTER;
+			  D_PostEvent(&event);
+			  
+		  break;
+		  case SDLK_RIGHT:
+		      if(weaponChangeRight==2){
+				  event.type = ev_keyup;
+				  event.data1 = SDLK_GREATER;
+				  D_PostEvent(&event);
+			  }
+			  weaponChangeRight=0;
+		  break;
+		  case SDLK_LEFT:
+		      if(weaponChangeLeft==2){
+				  event.type = ev_keyup;
+				  event.data1 = SDLK_LESS;
+				  D_PostEvent(&event);
+			  }
+			  weaponChangeLeft=0;
+		  break;
+	  }
+	  
 	event.type = ev_keyup;
 	event.data1 = xlatekey(&Event->key.keysym);
-	D_PostEvent(&event);
+	if(event.data1>0)D_PostEvent(&event);
 	break;
 
       case SDL_MOUSEBUTTONDOWN:
@@ -363,10 +514,18 @@ void I_FinishUpdate (void)
 	}
 
     }
-    if ( SDL_MUSTLOCK(screen) ) {
+    //if ( SDL_MUSTLOCK(screen) ) {
 	SDL_UnlockSurface(screen);
-    }
-    SDL_UpdateRect(screen, 0, 0, 0, 0);
+    //}
+    //SDL_UpdateRect(screen, 0, 0, 0, 0);
+    //if ( SDL_MUSTLOCK(hr_screen) ) {
+        SDL_UnlockSurface(hr_screen);
+    //}
+    SDL_BlitSurface(screen, 0, hr_screen, 0);
+    //SDL_UpdateRect(hr_screen, 0, 0, 0, 0);
+	SDL_Flip(hr_screen);
+
+
 }
 
 
@@ -396,10 +555,10 @@ void I_SetPalette (byte* palette)
     SDL_SetColors(screen, colors, 0, 256);
 }
 
-
 void I_InitGraphics(void)
 {
-
+    FB_init();
+	
     static int	firsttime=1;
     Uint16 video_w, video_h, w, h;
     Uint8 video_bpp;
@@ -408,7 +567,9 @@ void I_InitGraphics(void)
     if (!firsttime)
 	return;
     firsttime = 0;
-
+	
+	
+	
     video_flags = (SDL_SWSURFACE|SDL_HWPALETTE);
     if (!!M_CheckParm("-fullscreen"))
         video_flags |= SDL_FULLSCREEN;
@@ -450,11 +611,27 @@ void I_InitGraphics(void)
         I_Error("Smallest available mode (%dx%d) is too large!",
 						video_w, video_h);
     }
-    screen = SDL_SetVideoMode(video_w, video_h, 8, video_flags);
+
+    //video_w=240;
+    //video_h=180;
+
+    screen = SDL_CreateRGBSurface(0, video_w, video_h,
+                                      8, 0, 0, 0, 0);
+
+    hr_screen = SDL_SetVideoMode(video_w, video_h, 0, SDL_HWSURFACE);
+
+
     if ( screen == NULL ) {
         I_Error("Could not set %dx%d video mode: %s", video_w, video_h,
 							SDL_GetError());
     }
+    //screen->pitch=190;
+    printf("screen pitch: %d\n",screen->pitch);
+    printf("screen width: %d\n",screen->w);
+    printf("screen height: %d\n",screen->h);
+
+
+
     SDL_ShowCursor(0);
     SDL_WM_SetCaption("SDL DOOM! v1.10", "doom");
 

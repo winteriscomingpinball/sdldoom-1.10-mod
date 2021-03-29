@@ -228,13 +228,13 @@ default_t	defaults[] =
     {"key_left",&key_left, KEY_LEFTARROW},
     {"key_up",&key_up, KEY_UPARROW},
     {"key_down",&key_down, KEY_DOWNARROW},
-    {"key_strafeleft",&key_strafeleft, ','},
-    {"key_straferight",&key_straferight, '.'},
+    {"key_strafeleft",&key_strafeleft, 'd'},
+    {"key_straferight",&key_straferight, 'e'},
 
     {"key_fire",&key_fire, KEY_RCTRL},
-    {"key_use",&key_use, ' '},
+    {"key_use",&key_use, KEY_RSHIFT},
     {"key_strafe",&key_strafe, KEY_RALT},
-    {"key_speed",&key_speed, KEY_RSHIFT},
+    {"key_speed",&key_speed, 'a'},
 
     {"use_mouse",&usemouse, 1},
     {"mouseb_fire",&mousebfire,0},
@@ -247,7 +247,7 @@ default_t	defaults[] =
     {"joyb_use",&joybuse,3},
     {"joyb_speed",&joybspeed,2},
 
-    {"screenblocks",&screenblocks, 9},
+    {"screenblocks",&screenblocks, 10},
     {"detaillevel",&detailLevel, 0},
 
     {"snd_channels",&numChannels, 3},
@@ -429,7 +429,7 @@ WritePCXfile
     pcx->manufacturer = 0x0a;		// PCX id
     pcx->version = 5;			// 256 color
     pcx->encoding = 1;			// uncompressed
-    pcx->bits_per_pixel = 8;		// 256 color
+    pcx->bits_per_pixel = 16;		// 256 color
     pcx->xmin = 0;
     pcx->ymin = 0;
     pcx->xmax = SHORT(width-1);

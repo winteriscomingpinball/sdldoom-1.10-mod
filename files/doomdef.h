@@ -42,6 +42,7 @@ typedef enum
   commercial,	// DOOM 2 retail, E1 M34
   // DOOM 2 german edition not handled
   retail,	// DOOM 1 retail, E4, M36
+  chex,
   indetermined	// Well, no IWAD found.
   
 } GameMode_t;

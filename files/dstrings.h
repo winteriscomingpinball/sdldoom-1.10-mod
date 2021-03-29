@@ -38,8 +38,9 @@
 #endif
 
 // Misc. other strings.
-#define SAVEGAMENAME	"doomsav"
-
+//#define SAVEGAMENAME	"doomsav"
+extern char SAVEGAMENAME[10];
+extern char savepath[255];
 
 //
 // File locations,

@@ -27,6 +27,7 @@
 
 static const char rcsid[] = "$Id: d_main.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 
+
 #define	BGCOLOR		7
 #define	FGCOLOR		8
 
@@ -54,6 +55,13 @@ static int access(char *file, int mode)
 
 #include "doomdef.h"
 #include "doomstat.h"
+
+//extern char SAVEGAMENAME[10];
+char SAVEGAMENAME[10] = "doomsav";
+char		wadfile[1024];		// primary wad file
+char		mapdir[1024];           // directory of development maps
+char		basedefault[1024];      // default file
+char        savepath[255];
 
 #include "dstrings.h"
 #include "sounds.h"
@@ -87,6 +95,9 @@ static int access(char *file, int mode)
 
 
 #include "d_main.h"
+
+
+
 
 //
 // D-DoomLoop()
@@ -132,9 +143,7 @@ boolean		advancedemo;
 
 
 
-char		wadfile[1024];		// primary wad file
-char		mapdir[1024];           // directory of development maps
-char		basedefault[1024];      // default file
+
 
 
 void D_CheckNetGame (void);
@@ -216,16 +225,19 @@ void D_Display (void)
     boolean			done;
     boolean			wipe;
     boolean			redrawsbar;
-
+	
+	//puts("beginning of D_Display");
     if (nodrawers)
 	return;                    // for comparative timing / profiling
-		
+	
     redrawsbar = false;
     
     // change the view size if needed
     if (setsizeneeded)
     {
+		puts("set size view was needed... going to run R_ExecuteSetViewSize.");
 	R_ExecuteSetViewSize ();
+	puts("did that...");
 	oldgamestate = -1;                      // force background redraw
 	borderdrawcount = 3;
     }
@@ -233,14 +245,19 @@ void D_Display (void)
     // save the current screen if about to wipe
     if (gamestate != wipegamestate)
     {
+	//puts("need to wipe start screen...");
 	wipe = true;
 	wipe_StartScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
+	//puts("did that...");
     }
     else
 	wipe = false;
 
-    if (gamestate == GS_LEVEL && gametic)
-	HU_Erase();
+    if (gamestate == GS_LEVEL && gametic){
+		//puts("need to run HU_Erase...");
+		HU_Erase();
+		//puts("did that...");
+	}
     
     // do buffered drawing
     switch (gamestate)
@@ -272,24 +289,36 @@ void D_Display (void)
     }
     
     // draw buffered stuff to screen
+	//puts("need to run I_UpdateNoBlit...");
     I_UpdateNoBlit ();
     
     // draw the view directly
-    if (gamestate == GS_LEVEL && !automapactive && gametic)
+    if (gamestate == GS_LEVEL && !automapactive && gametic){
+		//puts("R_RenderPlayerView...");
+
+		
 	R_RenderPlayerView (&players[displayplayer]);
+	//puts("did that...");
+	}
 
-    if (gamestate == GS_LEVEL && gametic)
+    if (gamestate == GS_LEVEL && gametic){
+	//puts("HU_Drawer...");
 	HU_Drawer ();
-    
+   // puts("did that...");
+	}
     // clean up border stuff
-    if (gamestate != oldgamestate && gamestate != GS_LEVEL)
+    if (gamestate != oldgamestate && gamestate != GS_LEVEL){
+		puts("I_SetPalette...");
 	I_SetPalette (W_CacheLumpName ("PLAYPAL",PU_CACHE));
-
+puts("did that...");
+	}
     // see if the border needs to be initially drawn
     if (gamestate == GS_LEVEL && oldgamestate != GS_LEVEL)
     {
+		puts("R_FillBackScreen...");
 	viewactivestate = false;        // view was not active
 	R_FillBackScreen ();    // draw the pattern into the back screen
+	puts("did that...");
     }
 
     // see if the border needs to be updated to the screen
@@ -299,8 +328,10 @@ void D_Display (void)
 	    borderdrawcount = 3;
 	if (borderdrawcount)
 	{
+		puts("R_DrawViewBorder...");
 	    R_DrawViewBorder ();    // erase old menu stuff
-	    borderdrawcount--;
+	    puts("did that...");
+		borderdrawcount--;
 	}
 
     }
@@ -317,26 +348,36 @@ void D_Display (void)
 	    y = 4;
 	else
 	    y = viewwindowy+4;
+	puts("V_DrawPatchDirect...");
 	V_DrawPatchDirect(viewwindowx+(scaledviewwidth-68)/2,
 			  y,0,W_CacheLumpName ("M_PAUSE", PU_CACHE));
+	//puts("did that...");
     }
 
 
     // menus go directly to the screen
+	//puts("M_Drawer...");
     M_Drawer ();          // menu is drawn even on top of everything
-    NetUpdate ();         // send out any new accumulation
-
+    //puts("did that...");
+	//puts("NetUpdate...");
+	//NetUpdate ();         // send out any new accumulation
+	//puts("did that...");
 
     // normal update
     if (!wipe)
     {
+	//puts("I_FinishUpdate if not wipe...");
 	I_FinishUpdate ();              // page flip or blit buffer
+	//puts("did that...");
 	return;
     }
     
+	puts("wipe update...");
     // wipe update
+	puts("wipe_EndScreen...");
     wipe_EndScreen(0, 0, SCREENWIDTH, SCREENHEIGHT);
-
+	puts("did that...");
+	
     wipestart = I_GetTime () - 1;
 
     do
@@ -347,12 +388,21 @@ void D_Display (void)
 	    tics = nowtime - wipestart;
 	} while (!tics);
 	wipestart = nowtime;
+	puts("wipe_ScreenWipe...");
 	done = wipe_ScreenWipe(wipe_Melt
 			       , 0, 0, SCREENWIDTH, SCREENHEIGHT, tics);
+	puts("did that...");
+	puts("I_UpdateNoBlit...");
 	I_UpdateNoBlit ();
-	M_Drawer ();                            // menu is drawn even on top of wipes
+	puts("did that...");
+	puts("M_Drawert...");
+	M_Drawer ();	// menu is drawn even on top of wipes
+	puts("did that...");
+	
+	puts("I_FinishUpdate...");
 	I_FinishUpdate ();                      // page flip or blit buffer
-    } while (!done);
+    puts("did that...");
+	} while (!done);
 }
 
 
@@ -375,16 +425,25 @@ void D_DoomLoop (void)
 	debugfile = fopen (filename,"w");
     }
 	
+	
+	//puts("Going to run I_InitGraphics");
     I_InitGraphics ();
-
+	//puts("finished that... will now start loop...");
+	//puts("-----------------------------");
+	//puts("-----------------------------");
+	//puts("-----------------------------");
+	
+	
     while (1)
     {
 	// frame syncronous IO operations
-	I_StartFrame ();                
-	
+	//puts("frame syncronous IO operations");
+	I_StartFrame ();         	
+	//puts("did that...");
 	// process one or more tics
 	if (singletics)
 	{
+		//puts("process tics...");
 	    I_StartTic ();
 	    D_ProcessEvents ();
 	    G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
@@ -394,16 +453,22 @@ void D_DoomLoop (void)
 	    G_Ticker ();
 	    gametic++;
 	    maketic++;
+		//puts("did all that...");
 	}
 	else
 	{
+		//puts("run tics...");
 	    TryRunTics (); // will run at least one tic
+		//puts("did that...");
 	}
-
+    //puts("update sounds...");
 	S_UpdateSounds (players[consoleplayer].mo);// move positional sounds
+	//puts("did that...");
 
 	// Update display, next frame, with current state.
+	//puts("update display...");
 	D_Display ();
+	//puts("did that...");
     }
 }
 
@@ -502,7 +567,7 @@ void D_AdvanceDemo (void)
 	{
 	    pagetic = 200;
 
-	    if ( gamemode == retail )
+	    if ( gamemode == retail || gamemode == chex )
 	      pagename = "CREDIT";
 	    else
 	      pagename = "HELP2";
@@ -572,6 +637,8 @@ void IdentifyVersion (void)
     char*	doom2fwad;
     char*	plutoniawad;
     char*	tntwad;
+	char*	chexquestwad;
+	char*	chexquest2wad;
 
     char *home;
     char *doomwaddir;
@@ -600,18 +667,25 @@ void IdentifyVersion (void)
     plutoniawad = malloc(strlen(doomwaddir)+1+/*9*/12+1);
     sprintf(plutoniawad, "%s/plutonia.wad", doomwaddir);
 
-    tntwad = malloc(strlen(doomwaddir)+1+9+1);
-    sprintf(tntwad, "%s/tnt.wad", doomwaddir);
+    chexquestwad = malloc(strlen(doomwaddir)+1+9+1);
+    sprintf(chexquestwad, "%s/chex.wad", doomwaddir);
+	
+	chexquest2wad = malloc(strlen(doomwaddir)+1+9+1);
+    sprintf(chexquest2wad, "%s/chex2.wad", doomwaddir);
 
 
     // French stuff.
     doom2fwad = malloc(strlen(doomwaddir)+1+10+1);
     sprintf(doom2fwad, "%s/doom2f.wad", doomwaddir);
 
-    home = getenv("HOME");
-    if (!home)
-      home = ".";
+    //home = getenv("HOME");
+    home = "./save";
+    //if (!home)
+      //home = "./save";
     sprintf(basedefault, "%s/.doomrc", home);
+	
+	sprintf(savepath, home);
+	printf("will save files here: %s\n",savepath);
 
     if (M_CheckParm ("-shdev"))
     {
@@ -621,6 +695,7 @@ void IdentifyVersion (void)
 	D_AddFile (DEVMAPS"data_se/texture1.lmp");
 	D_AddFile (DEVMAPS"data_se/pnames.lmp");
 	strcpy (basedefault,DEVDATA"default.cfg");
+	sprintf(SAVEGAMENAME,"doomsav");
 	return;
     }
 
@@ -633,6 +708,7 @@ void IdentifyVersion (void)
 	D_AddFile (DEVMAPS"data_se/texture2.lmp");
 	D_AddFile (DEVMAPS"data_se/pnames.lmp");
 	strcpy (basedefault,DEVDATA"default.cfg");
+	sprintf(SAVEGAMENAME,"doomsav");
 	return;
     }
 
@@ -651,6 +727,7 @@ void IdentifyVersion (void)
 	D_AddFile (DEVMAPS"cdata/texture1.lmp");
 	D_AddFile (DEVMAPS"cdata/pnames.lmp");
 	strcpy (basedefault,DEVDATA"default.cfg");
+	sprintf(SAVEGAMENAME,"doom2sav");
 	return;
     }
 
@@ -662,6 +739,7 @@ void IdentifyVersion (void)
 	language = french;
 	printf("French version\n");
 	D_AddFile (doom2fwad);
+	sprintf(SAVEGAMENAME,"doom2sav");
 	return;
     }
 
@@ -671,11 +749,36 @@ void IdentifyVersion (void)
 	D_AddFile (doom2wad);
 	return;
     }
+	
+	
+	if ( !access (chexquestwad,R_OK) &&  !access (chexquest2wad,R_OK))
+    {
+	gamemode = chex;
+	//devparm = true;
+	D_AddFile (chexquestwad);
+	D_AddFile (chexquest2wad);
+	sprintf(SAVEGAMENAME,"chex2sav");
+	
+	return;
+    }
+	
+	
+	
+	if ( !access (chexquestwad,R_OK) )
+    {
+	gamemode = chex;
+	//devparm = true;
+	D_AddFile (chexquestwad);
+	sprintf(SAVEGAMENAME,"chexsav");
+	
+	return;
+    }
 
     if ( !access (plutoniawad, R_OK ) )
     {
       gamemode = commercial;
       D_AddFile (plutoniawad);
+	  sprintf(SAVEGAMENAME,"plutsav");
       return;
     }
 
@@ -683,6 +786,7 @@ void IdentifyVersion (void)
     {
       gamemode = commercial;
       D_AddFile (tntwad);
+	  sprintf(SAVEGAMENAME,"tntsav");
       return;
     }
 
@@ -690,6 +794,7 @@ void IdentifyVersion (void)
     {
       gamemode = retail;
       D_AddFile (doomuwad);
+	  sprintf(SAVEGAMENAME,"doomusav");
       return;
     }
 
@@ -697,6 +802,7 @@ void IdentifyVersion (void)
     {
       gamemode = registered;
       D_AddFile (doomwad);
+	  sprintf(SAVEGAMENAME,"doomsav");
       return;
     }
 
@@ -704,6 +810,7 @@ void IdentifyVersion (void)
     {
       gamemode = shareware;
       D_AddFile (doom1wad);
+	  sprintf(SAVEGAMENAME,"doomsav");
       return;
     }
 
@@ -1106,6 +1213,7 @@ printf("added\n");
     ST_Init ();
 
     // check for a driver that wants intermission stats
+	printf ("check for a driver that wants intermission stats.\n");
     p = M_CheckParm ("-statcopy");
     if (p && p<myargc-1)
     {
@@ -1114,7 +1222,10 @@ printf("added\n");
 
 	statcopy = (void*)atoi(myargv[p+1]);
 	printf ("External statistics registered.\n");
-    }
+    }else{
+		
+		printf ("didn't need that...\n");
+	}
     
     // start the apropriate game based on parms
     p = M_CheckParm ("-record");
@@ -1144,9 +1255,9 @@ printf("added\n");
     if (p && p < myargc-1)
     {
 	if (M_CheckParm("-cdrom"))
-	    sprintf(file, "c:\\doomdata\\"SAVEGAMENAME"%c.dsg",myargv[p+1][0]);
+	    sprintf(file, "c:\\doomdata\\%s%c.dsg",SAVEGAMENAME,myargv[p+1][0]);
 	else
-	    sprintf(file, SAVEGAMENAME"%c.dsg",myargv[p+1][0]);
+	    sprintf(file, "%s/%s%c.dsg",savepath,SAVEGAMENAME,myargv[p+1][0]);
 	G_LoadGame (file);
     }
 	
@@ -1159,6 +1270,8 @@ printf("added\n");
 	    D_StartTitle ();                // start up intro loop
 
     }
+	
+	printf ("Starting D_DoomLoop...\n");
 
     D_DoomLoop ();  // never returns
 }
