@@ -1674,6 +1674,7 @@ void G_DoPlayDemo (void)
     //  gameaction = ga_nothing;
     //  return;
     //}
+	
     
     skill = *demo_p++; 
     episode = *demo_p++; 
